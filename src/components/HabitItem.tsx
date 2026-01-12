@@ -11,9 +11,25 @@ interface HabitItemProps {
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
+const MiniBarChart = ({ completedDays }: { completedDays: boolean[] }) => {
+  return (
+    <div className="flex items-end gap-0.5 h-4">
+      {completedDays.map((completed, index) => (
+        <div
+          key={index}
+          className={`w-1 rounded-full transition-all duration-300 ${
+            completed ? "h-4 bg-foreground" : "h-1 bg-border"
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
+
 const HabitItem = ({ id, name, completedDays, onToggle, onDelete }: HabitItemProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const streak = completedDays.filter(Boolean).length;
+  const percentage = Math.round((streak / 7) * 100);
 
   return (
     <div
@@ -22,11 +38,22 @@ const HabitItem = ({ id, name, completedDays, onToggle, onDelete }: HabitItemPro
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-center gap-4 flex-1">
-        <div className="flex flex-col">
-          <span className="text-sm font-medium tracking-tight">{name}</span>
-          <span className="text-xs text-muted-foreground mt-0.5">
-            {streak}/7 this week
-          </span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium tracking-tight">{name}</span>
+            <MiniBarChart completedDays={completedDays} />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-16 h-1 bg-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-foreground rounded-full transition-all duration-500"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground">
+              {streak}/7
+            </span>
+          </div>
         </div>
       </div>
 

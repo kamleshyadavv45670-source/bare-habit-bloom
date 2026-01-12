@@ -79,6 +79,12 @@ const HabitTracker = () => {
   const totalPossible = habits.length * 7;
   const completionRate = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
 
+  // Calculate daily completion for the week overview chart
+  const dailyCompletion = Array.from({ length: 7 }, (_, dayIndex) => {
+    const completed = habits.filter((h) => h.completedDays[dayIndex]).length;
+    return habits.length > 0 ? (completed / habits.length) * 100 : 0;
+  });
+
   return (
     <div className="min-h-screen bg-background px-4 py-12 md:py-20">
       <div className="max-w-2xl mx-auto">
@@ -90,9 +96,31 @@ const HabitTracker = () => {
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
             Habits
           </h1>
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl md:text-6xl font-light">{completionRate}%</span>
-            <span className="text-muted-foreground text-sm">this week</span>
+          
+          {/* Stats row */}
+          <div className="flex items-end justify-between gap-6">
+            <div className="flex items-baseline gap-2">
+              <span className="text-5xl md:text-6xl font-light">{completionRate}%</span>
+              <span className="text-muted-foreground text-sm">this week</span>
+            </div>
+
+            {/* Weekly overview mini chart */}
+            {habits.length > 0 && (
+              <div className="flex items-end gap-1.5 h-12 pb-1">
+                {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+                  <div key={index} className="flex flex-col items-center gap-1">
+                    <div
+                      className="w-3 bg-foreground rounded-sm transition-all duration-500"
+                      style={{
+                        height: `${Math.max(4, (dailyCompletion[index] / 100) * 32)}px`,
+                        opacity: dailyCompletion[index] > 0 ? 1 : 0.2,
+                      }}
+                    />
+                    <span className="text-[8px] text-muted-foreground">{day}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </header>
 
