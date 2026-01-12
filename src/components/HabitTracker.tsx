@@ -22,16 +22,31 @@ const getWeekDates = () => {
 };
 
 const HabitTracker = () => {
+  const getDefaultHabits = (): Habit[] => [
+    { id: "1", name: "Morning meditation", completedDays: [true, true, true, false, false, false, false] },
+    { id: "2", name: "Read 30 minutes", completedDays: [true, false, true, true, false, false, false] },
+    { id: "3", name: "Exercise", completedDays: [false, true, false, true, false, false, false] },
+  ];
+
   const [habits, setHabits] = useState<Habit[]>(() => {
     const saved = localStorage.getItem("habits");
     if (saved) {
-      return JSON.parse(saved);
+      try {
+        const parsed = JSON.parse(saved);
+        // Validate the parsed data is an array
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+        console.error('Invalid habits data format in localStorage');
+        localStorage.removeItem('habits');
+        return getDefaultHabits();
+      } catch (error) {
+        console.error('Failed to parse habits from localStorage:', error);
+        localStorage.removeItem('habits'); // Clear corrupted data
+        return getDefaultHabits();
+      }
     }
-    return [
-      { id: "1", name: "Morning meditation", completedDays: [true, true, true, false, false, false, false] },
-      { id: "2", name: "Read 30 minutes", completedDays: [true, false, true, true, false, false, false] },
-      { id: "3", name: "Exercise", completedDays: [false, true, false, true, false, false, false] },
-    ];
+    return getDefaultHabits();
   });
 
   useEffect(() => {
