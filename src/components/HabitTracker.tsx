@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import HabitItem from "./HabitItem";
 import AddHabitForm from "./AddHabitForm";
+import { ChevronLeft, ChevronRight, History } from "lucide-react";
 
 interface Habit {
   id: string;
@@ -8,12 +9,40 @@ interface Habit {
   completedDays: boolean[];
 }
 
-const getWeekDates = () => {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+interface WeekHistory {
+  weekKey: string;
+  weekLabel: string;
+  habits: Habit[];
+  completionRate: number;
+}
+
+const getWeekKey = (date: Date = new Date()) => {
+  const year = date.getFullYear();
+  const startOfYear = new Date(year, 0, 1);
+  const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+  return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+};
+
+const getWeekLabel = (date: Date = new Date()) => {
+  const monday = getMonday(date);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
   
+  const formatDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${formatDate(monday)} - ${formatDate(sunday)}`;
+};
+
+const getMonday = (date: Date = new Date()) => {
+  const d = new Date(date);
+  const dayOfWeek = d.getDay();
+  d.setDate(d.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const getWeekDates = () => {
+  const monday = getMonday();
   return Array.from({ length: 7 }, (_, i) => {
     const date = new Date(monday);
     date.setDate(monday.getDate() + i);
@@ -21,20 +50,78 @@ const getWeekDates = () => {
   });
 };
 
-const HabitTracker = () => {
-  const getDefaultHabits = (): Habit[] => [
-    { id: "1", name: "Morning meditation", completedDays: [true, true, true, false, false, false, false] },
-    { id: "2", name: "Read 30 minutes", completedDays: [true, false, true, true, false, false, false] },
-    { id: "3", name: "Exercise", completedDays: [false, true, false, true, false, false, false] },
-  ];
+const getDefaultHabits = (): Habit[] => [
+  { id: "1", name: "Morning meditation", completedDays: [false, false, false, false, false, false, false] },
+  { id: "2", name: "Read 30 minutes", completedDays: [false, false, false, false, false, false, false] },
+  { id: "3", name: "Exercise", completedDays: [false, false, false, false, false, false, false] },
+];
 
-  const [habits, setHabits] = useState<Habit[]>(() => {
-    const saved = localStorage.getItem("habits");
+const HabitTracker = () => {
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<WeekHistory[]>(() => {
+    const saved = localStorage.getItem("habitsHistory");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Validate the parsed data is an array
         if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (error) {
+        console.error('Failed to parse habits history:', error);
+        localStorage.removeItem('habitsHistory');
+      }
+    }
+    return [];
+  });
+
+  const [habits, setHabits] = useState<Habit[]>(() => {
+    const saved = localStorage.getItem("habits");
+    const savedWeekKey = localStorage.getItem("habitsWeekKey");
+    const currentWeekKey = getWeekKey();
+
+    if (saved && savedWeekKey) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Check if it's a new week
+          if (savedWeekKey !== currentWeekKey) {
+            // Save current data to history before resetting
+            const completionRate = parsed.length > 0 
+              ? Math.round((parsed.reduce((acc: number, h: Habit) => acc + h.completedDays.filter(Boolean).length, 0) / (parsed.length * 7)) * 100)
+              : 0;
+            
+            const historyEntry: WeekHistory = {
+              weekKey: savedWeekKey,
+              weekLabel: getWeekLabel(getMonday(new Date(savedWeekKey.split('-W')[0] + '-01-01'))),
+              habits: parsed,
+              completionRate
+            };
+
+            // Load existing history and add new entry
+            const existingHistory = localStorage.getItem("habitsHistory");
+            let historyArray: WeekHistory[] = [];
+            if (existingHistory) {
+              try {
+                historyArray = JSON.parse(existingHistory);
+              } catch {}
+            }
+            
+            // Only add if not already in history
+            if (!historyArray.some(h => h.weekKey === savedWeekKey)) {
+              historyArray.unshift(historyEntry);
+              // Keep only last 12 weeks
+              historyArray = historyArray.slice(0, 12);
+              localStorage.setItem("habitsHistory", JSON.stringify(historyArray));
+            }
+
+            // Reset habits for new week (keep habit names, clear completions)
+            const resetHabits = parsed.map((h: Habit) => ({
+              ...h,
+              completedDays: [false, false, false, false, false, false, false]
+            }));
+            localStorage.setItem("habitsWeekKey", currentWeekKey);
+            return resetHabits;
+          }
           return parsed;
         }
         console.error('Invalid habits data format in localStorage');
@@ -42,10 +129,13 @@ const HabitTracker = () => {
         return getDefaultHabits();
       } catch (error) {
         console.error('Failed to parse habits from localStorage:', error);
-        localStorage.removeItem('habits'); // Clear corrupted data
+        localStorage.removeItem('habits');
         return getDefaultHabits();
       }
     }
+    
+    // First time or no saved data
+    localStorage.setItem("habitsWeekKey", currentWeekKey);
     return getDefaultHabits();
   });
 
@@ -53,9 +143,14 @@ const HabitTracker = () => {
     localStorage.setItem("habits", JSON.stringify(habits));
   }, [habits]);
 
+  useEffect(() => {
+    localStorage.setItem("habitsHistory", JSON.stringify(history));
+  }, [history]);
+
   const weekDates = getWeekDates();
   const today = new Date();
   const monthName = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const currentWeekLabel = getWeekLabel();
 
   const handleToggle = (id: string, dayIndex: number) => {
     setHabits((prev) =>
@@ -105,12 +200,26 @@ const HabitTracker = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <header className="mb-12 fade-in">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-            {monthName}
-          </p>
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              {monthName}
+            </p>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors ${
+                showHistory 
+                  ? "bg-foreground text-background" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <History className="w-3 h-3" />
+              History
+            </button>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-1">
             Habits
           </h1>
+          <p className="text-xs text-muted-foreground mb-4">{currentWeekLabel}</p>
           
           {/* Stats row */}
           <div className="flex items-end justify-between gap-6">
@@ -138,6 +247,48 @@ const HabitTracker = () => {
             )}
           </div>
         </header>
+
+        {/* History Panel */}
+        {showHistory && (
+          <div className="mb-8 p-4 border border-border rounded-lg fade-in">
+            <h2 className="text-sm font-medium mb-4">Past Weeks</h2>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No history yet. Complete a week to see it here.</p>
+            ) : (
+              <div className="space-y-3">
+                {history.map((week) => (
+                  <div key={week.weekKey} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <div>
+                      <p className="text-sm font-medium">{week.weekLabel}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {week.habits.length} habit{week.habits.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-end gap-0.5 h-6">
+                        {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
+                          const completed = week.habits.filter(h => h.completedDays[dayIndex]).length;
+                          const percentage = week.habits.length > 0 ? (completed / week.habits.length) * 100 : 0;
+                          return (
+                            <div
+                              key={dayIndex}
+                              className="w-1.5 bg-foreground rounded-sm"
+                              style={{
+                                height: `${Math.max(2, (percentage / 100) * 20)}px`,
+                                opacity: percentage > 0 ? 1 : 0.2,
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                      <span className="text-lg font-light w-12 text-right">{week.completionRate}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Week indicator */}
         <div className="flex justify-end mb-2 pr-14">
