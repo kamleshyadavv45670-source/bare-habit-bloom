@@ -1,10 +1,11 @@
-import { Check, X } from "lucide-react";
+import { Check, X, Flame } from "lucide-react";
 import { useState } from "react";
 
 interface HabitItemProps {
   id: string;
   name: string;
   completedDays: boolean[];
+  weeklyStreak?: number;
   onToggle: (id: string, dayIndex: number) => void;
   onDelete: (id: string) => void;
 }
@@ -26,10 +27,10 @@ const MiniBarChart = ({ completedDays }: { completedDays: boolean[] }) => {
   );
 };
 
-const HabitItem = ({ id, name, completedDays, onToggle, onDelete }: HabitItemProps) => {
+const HabitItem = ({ id, name, completedDays, weeklyStreak = 0, onToggle, onDelete }: HabitItemProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const streak = completedDays.filter(Boolean).length;
-  const percentage = Math.round((streak / 7) * 100);
+  const daysCompleted = completedDays.filter(Boolean).length;
+  const percentage = Math.round((daysCompleted / 7) * 100);
 
   return (
     <div
@@ -41,6 +42,15 @@ const HabitItem = ({ id, name, completedDays, onToggle, onDelete }: HabitItemPro
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium tracking-tight">{name}</span>
+            {weeklyStreak > 0 && (
+              <div 
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground"
+                title={`${weeklyStreak} week${weeklyStreak > 1 ? 's' : ''} streak (5+ days/week)`}
+              >
+                <Flame className="w-3 h-3" />
+                <span className="text-[10px] font-medium">{weeklyStreak}w</span>
+              </div>
+            )}
             <MiniBarChart completedDays={completedDays} />
           </div>
           <div className="flex items-center gap-2">
@@ -51,7 +61,7 @@ const HabitItem = ({ id, name, completedDays, onToggle, onDelete }: HabitItemPro
               />
             </div>
             <span className="text-[10px] text-muted-foreground">
-              {streak}/7
+              {daysCompleted}/7
             </span>
           </div>
         </div>

@@ -56,6 +56,37 @@ const getDefaultHabits = (): Habit[] => [
   { id: "3", name: "Exercise", completedDays: [false, false, false, false, false, false, false] },
 ];
 
+// Calculate weekly streak for a habit (consecutive weeks with 5+ days completed)
+const calculateWeeklyStreak = (
+  habitName: string, 
+  currentCompletedDays: boolean[], 
+  history: WeekHistory[]
+): number => {
+  const currentWeekCompleted = currentCompletedDays.filter(Boolean).length >= 5;
+  if (!currentWeekCompleted) return 0;
+  
+  let streak = 1; // Current week counts
+  
+  // Sort history from most recent to oldest
+  const sortedHistory = [...history].sort((a, b) => b.weekKey.localeCompare(a.weekKey));
+  
+  for (const week of sortedHistory) {
+    const habit = week.habits.find(h => h.name === habitName);
+    if (habit) {
+      const completedCount = habit.completedDays.filter(Boolean).length;
+      if (completedCount >= 5) {
+        streak++;
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  
+  return streak;
+};
+
 const HabitTracker = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<WeekHistory[]>(() => {
@@ -317,6 +348,7 @@ const HabitTracker = () => {
                 id={habit.id}
                 name={habit.name}
                 completedDays={habit.completedDays}
+                weeklyStreak={calculateWeeklyStreak(habit.name, habit.completedDays, history)}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
               />
