@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import HabitItem from "./HabitItem";
 import AddHabitForm from "./AddHabitForm";
-import { ChevronLeft, ChevronRight, History } from "lucide-react";
+import { History, LogOut, LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface Habit {
   id: string;
@@ -88,6 +90,8 @@ const calculateWeeklyStreak = (
 };
 
 const HabitTracker = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<WeekHistory[]>(() => {
     const saved = localStorage.getItem("habitsHistory");
@@ -235,17 +239,45 @@ const HabitTracker = () => {
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
               {monthName}
             </p>
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors ${
-                showHistory 
-                  ? "bg-foreground text-background" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              <History className="w-3 h-3" />
-              History
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors ${
+                  showHistory 
+                    ? "bg-foreground text-background" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <History className="w-3 h-3" />
+                History
+              </button>
+              {user ? (
+                <div className="flex items-center gap-1.5">
+                  {user.user_metadata?.avatar_url && (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="avatar"
+                      className="w-5 h-5 rounded-full"
+                    />
+                  )}
+                  <button
+                    onClick={signOut}
+                    className="flex items-center gap-1 text-xs px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    title="Sign out"
+                  >
+                    <LogOut className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => navigate("/login")}
+                  className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <LogIn className="w-3 h-3" />
+                  Sign in
+                </button>
+              )}
+            </div>
           </div>
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-1">
             Habits
