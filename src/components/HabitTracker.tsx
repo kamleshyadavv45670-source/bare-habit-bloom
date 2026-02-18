@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import HabitItem from "./HabitItem";
 import AddHabitForm from "./AddHabitForm";
 import { History, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { triggerStreakCelebration, getMilestoneMessage } from "@/lib/streakCelebration";
+import { toast } from "sonner";
 
 interface Habit {
   id: string;
@@ -187,9 +189,11 @@ const HabitTracker = () => {
   const monthName = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const currentWeekLabel = getWeekLabel();
 
+  const prevStreaksRef = useRef<Record<string, number>>({});
+
   const handleToggle = (id: string, dayIndex: number) => {
-    setHabits((prev) =>
-      prev.map((habit) =>
+    setHabits((prev) => {
+      const updated = prev.map((habit) =>
         habit.id === id
           ? {
               ...habit,
@@ -198,8 +202,28 @@ const HabitTracker = () => {
               ),
             }
           : habit
-      )
-    );
+      );
+
+      // Check for milestone streak after toggle
+      const updatedHabit = updated.find((h) => h.id === id);
+      if (updatedHabit) {
+        const newStreak = calculateWeeklyStreak(updatedHabit.name, updatedHabit.completedDays, history);
+        const prevStreak = prevStreaksRef.current[id] ?? 0;
+
+        if (newStreak !== prevStreak) {
+          prevStreaksRef.current[id] = newStreak;
+          const message = getMilestoneMessage(newStreak);
+          if (message) {
+            setTimeout(() => {
+              triggerStreakCelebration(newStreak);
+              toast.success(message, { duration: 4000 });
+            }, 100);
+          }
+        }
+      }
+
+      return updated;
+    });
   };
 
   const handleAdd = (name: string) => {
