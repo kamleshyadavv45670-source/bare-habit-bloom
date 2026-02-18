@@ -1,4 +1,5 @@
 import { Check, X, Flame } from "lucide-react";
+import { isMilestoneStreak } from "@/lib/streakCelebration";
 import { useState } from "react";
 
 interface HabitItemProps {
@@ -43,11 +44,23 @@ const HabitItem = ({ id, name, completedDays, weeklyStreak = 0, onToggle, onDele
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium tracking-tight">{name}</span>
             {weeklyStreak > 0 && (
-              <div 
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground"
-                title={`${weeklyStreak} week${weeklyStreak > 1 ? 's' : ''} streak (5+ days/week)`}
+              <div
+                className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full transition-all duration-300 ${
+                  isMilestoneStreak(weeklyStreak)
+                    ? weeklyStreak >= 12
+                      ? "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 ring-1 ring-yellow-400/50"
+                      : weeklyStreak >= 8
+                      ? "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 ring-1 ring-purple-400/50"
+                      : "bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 ring-1 ring-green-400/50"
+                    : "bg-muted text-muted-foreground"
+                }`}
+                title={`${weeklyStreak} week${weeklyStreak > 1 ? "s" : ""} streak (5+ days/week)`}
               >
-                <Flame className="w-3 h-3" />
+                <Flame
+                  className={`w-3 h-3 ${
+                    isMilestoneStreak(weeklyStreak) ? "animate-pulse" : ""
+                  }`}
+                />
                 <span className="text-[10px] font-medium">{weeklyStreak}w</span>
               </div>
             )}
