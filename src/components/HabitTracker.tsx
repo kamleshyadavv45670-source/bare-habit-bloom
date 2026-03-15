@@ -321,7 +321,7 @@ const HabitTracker = () => {
                 {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
                   <div key={index} className="flex flex-col items-center gap-1">
                     <div
-                      className="w-3 bg-foreground rounded-sm transition-all duration-500"
+                      className="w-3 bg-primary rounded-sm transition-all duration-500"
                       style={{
                         height: `${Math.max(4, (dailyCompletion[index] / 100) * 32)}px`,
                         opacity: dailyCompletion[index] > 0 ? 1 : 0.2,
@@ -359,7 +359,7 @@ const HabitTracker = () => {
                           return (
                             <div
                               key={dayIndex}
-                              className="w-1.5 bg-foreground rounded-sm"
+                              className="w-1.5 bg-primary rounded-sm"
                               style={{
                                 height: `${Math.max(2, (percentage / 100) * 20)}px`,
                                 opacity: percentage > 0 ? 1 : 0.2,
