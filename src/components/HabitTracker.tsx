@@ -359,7 +359,7 @@ const HabitTracker = () => {
                           return (
                             <div
                               key={dayIndex}
-                              className="w-1.5 bg-foreground rounded-sm"
+                              className="w-1.5 bg-primary rounded-sm"
                               style={{
                                 height: `${Math.max(2, (percentage / 100) * 20)}px`,
                                 opacity: percentage > 0 ? 1 : 0.2,
