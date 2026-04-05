@@ -157,7 +157,7 @@ export function useHabits() {
             return { weekKey, weekLabel: weekKey, habits: weekHabits, completionRate };
           })
           .sort((a, b) => b.weekKey.localeCompare(a.weekKey))
-          .slice(0, 12);
+          .slice(0, 52);
 
         setHistory(historyEntries);
       }
