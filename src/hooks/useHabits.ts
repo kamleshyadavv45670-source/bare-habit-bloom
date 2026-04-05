@@ -187,7 +187,7 @@ export function useHabits() {
             let arr: WeekHistory[] = existingHistory ? JSON.parse(existingHistory) : [];
             if (!arr.some((h) => h.weekKey === savedWeekKey)) {
               arr.unshift(entry);
-              arr = arr.slice(0, 12);
+              arr = arr.slice(0, 52);
               localStorage.setItem("habitsHistory", JSON.stringify(arr));
             }
             setHistory(arr);
