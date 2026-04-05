@@ -14,7 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      habit_completions: {
+        Row: {
+          created_at: string
+          day_index: number
+          habit_id: string
+          id: string
+          user_id: string
+          week_key: string
+        }
+        Insert: {
+          created_at?: string
+          day_index: number
+          habit_id: string
+          id?: string
+          user_id: string
+          week_key: string
+        }
+        Update: {
+          created_at?: string
+          day_index?: number
+          habit_id?: string
+          id?: string
+          user_id?: string
+          week_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
