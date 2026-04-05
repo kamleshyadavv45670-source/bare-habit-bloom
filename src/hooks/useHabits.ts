@@ -157,7 +157,7 @@ export function useHabits() {
             return { weekKey, weekLabel: weekKey, habits: weekHabits, completionRate };
           })
           .sort((a, b) => b.weekKey.localeCompare(a.weekKey))
-          .slice(0, 12);
+          .slice(0, 52);
 
         setHistory(historyEntries);
       }
@@ -187,7 +187,7 @@ export function useHabits() {
             let arr: WeekHistory[] = existingHistory ? JSON.parse(existingHistory) : [];
             if (!arr.some((h) => h.weekKey === savedWeekKey)) {
               arr.unshift(entry);
-              arr = arr.slice(0, 12);
+              arr = arr.slice(0, 52);
               localStorage.setItem("habitsHistory", JSON.stringify(arr));
             }
             setHistory(arr);
