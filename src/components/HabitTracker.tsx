@@ -195,6 +195,7 @@ const HabitTracker = () => {
                 name={habit.name}
                 completedDays={habit.completedDays}
                 weeklyStreak={calculateWeeklyStreak(habit.name, habit.completedDays, history)}
+                imageUrl={habit.imageUrl}
                 onToggle={onToggle}
                 onDelete={handleDelete}
               />
