@@ -6,6 +6,7 @@ export interface Habit {
   id: string;
   name: string;
   completedDays: boolean[];
+  imageUrl?: string;
 }
 
 export interface WeekHistory {
@@ -89,7 +90,7 @@ export function useHabits() {
       // Load habits
       const { data: dbHabits, error: habitsErr } = await supabase
         .from("habits")
-        .select("id, name, created_at")
+        .select("id, name, image_url, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
 
@@ -120,6 +121,7 @@ export function useHabits() {
         id: h.id,
         name: h.name,
         completedDays: Array.from({ length: 7 }, (_, i) => completionMap.get(h.id)?.has(i) ?? false),
+        imageUrl: h.image_url ?? undefined,
       }));
 
       setHabits(loadedHabits);
@@ -148,6 +150,7 @@ export function useHabits() {
                 id: h.id,
                 name: h.name,
                 completedDays: Array.from({ length: 7 }, (_, i) => habitMap.get(h.id)?.has(i) ?? false),
+                imageUrl: h.image_url ?? undefined,
               }));
 
             const totalCompleted = weekHabits.reduce((acc, h) => acc + h.completedDays.filter(Boolean).length, 0);
@@ -279,15 +282,30 @@ export function useHabits() {
   );
 
   const handleAdd = useCallback(
-    async (name: string) => {
+    async (name: string, imageFile?: File) => {
+      let imageUrl: string | undefined;
+
+      if (user && imageFile) {
+        const filePath = `${user.id}/${Date.now()}-${imageFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("habit-images")
+          .upload(filePath, imageFile);
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from("habit-images")
+            .getPublicUrl(filePath);
+          imageUrl = urlData.publicUrl;
+        }
+      }
+
       if (user) {
         const { data, error } = await supabase
           .from("habits")
-          .insert({ user_id: user.id, name })
-          .select("id, name")
+          .insert({ user_id: user.id, name, image_url: imageUrl ?? null })
+          .select("id, name, image_url")
           .single();
         if (!error && data) {
-          setHabits((prev) => [...prev, { id: data.id, name: data.name, completedDays: Array(7).fill(false) }]);
+          setHabits((prev) => [...prev, { id: data.id, name: data.name, completedDays: Array(7).fill(false), imageUrl: data.image_url ?? undefined }]);
         }
       } else {
         setHabits((prev) => [
