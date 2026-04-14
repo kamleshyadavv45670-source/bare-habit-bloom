@@ -7,6 +7,7 @@ interface HabitItemProps {
   name: string;
   completedDays: boolean[];
   weeklyStreak?: number;
+  imageUrl?: string;
   onToggle: (id: string, dayIndex: number) => void;
   onDelete: (id: string) => void;
 }
@@ -28,7 +29,7 @@ const MiniBarChart = ({ completedDays }: { completedDays: boolean[] }) => {
   );
 };
 
-const HabitItem = ({ id, name, completedDays, weeklyStreak = 0, onToggle, onDelete }: HabitItemProps) => {
+const HabitItem = ({ id, name, completedDays, weeklyStreak = 0, imageUrl, onToggle, onDelete }: HabitItemProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const daysCompleted = completedDays.filter(Boolean).length;
   const percentage = Math.round((daysCompleted / 7) * 100);
@@ -40,6 +41,9 @@ const HabitItem = ({ id, name, completedDays, weeklyStreak = 0, onToggle, onDele
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-center gap-4 flex-1">
+        {imageUrl && (
+          <img src={imageUrl} alt={name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+        )}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium tracking-tight">{name}</span>
