@@ -59,6 +59,12 @@ jobs:
       - name: Build web app
         run: bun run build
 
+      - name: Add Android platform if missing
+        run: |
+          if [ ! -d "android" ]; then
+            bunx cap add android
+          fi
+
       - name: Sync Capacitor
         run: bunx cap sync android
 
